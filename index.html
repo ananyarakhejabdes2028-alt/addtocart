@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Add to Catch</title>
+<style>
+:root{--cream:#faf8ec;--paper:#fffdf3;--ink:#231a1f;--teal:#25b3a5;--tom:#e8222e;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--cream);color:var(--ink);font:17px/1.5 "Avenir Next","Segoe UI",system-ui,sans-serif;overflow-x:hidden}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opacity:.4;mix-blend-mode:multiply;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .28 0 0 0 0 .2 0 0 0 .9 -.3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
+.display{font-family:"Segoe Script","Snell Roundhand","Bradley Hand","Brush Script MT",cursive;font-weight:700;line-height:1.1;margin:0}
+.hand{font-family:"Segoe Print","Bradley Hand","Marker Felt","Comic Sans MS",cursive}
+.small{font-size:14px;opacity:.8}
+.btn{font:inherit;font-weight:800;background:var(--tom);color:#fff;border:0;border-radius:999px;padding:.7em 1.5em;min-height:48px;cursor:pointer;letter-spacing:.05em;transition:transform .15s}
+.btn:hover{transform:scale(1.04)}
+.btn.alt{background:var(--paper);color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
+.btn[aria-disabled=true]{opacity:.45}
+button:focus-visible,.obj:focus-visible{outline:3px solid var(--teal);outline-offset:3px}
+.obj:focus{outline:none}
+/* MENU */
+.menu{min-height:100svh;display:grid;place-items:center;padding:28px 16px 70px;position:relative;overflow:hidden}
+.pad{position:absolute;filter:drop-shadow(0 10px 12px rgba(18,38,63,.22));pointer-events:none}
+.sheet{position:relative;max-width:520px;width:100%;padding:20px 8px 34px;text-align:center}
+.sheet::before{display:none}
+.sheet .dot{position:absolute;top:22px;right:24px;width:12px;height:12px;border:2px solid var(--ink);border-radius:50%}
+.tag{font-size:12px;letter-spacing:.3em;text-transform:uppercase;margin:0 0 14px;opacity:.85}
+h1{font-size:clamp(52px,15vw,92px);font-weight:400;color:var(--ink)}
+h1 span{color:var(--tom)}
+.shoal{display:block;width:min(100%,420px);margin:6px auto 0;overflow:visible}.f{animation:bob 5s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-5px)}}
+.cap{font-size:20px;margin:6px 0 20px}
+.items{list-style:none;padding:0;margin:0 auto 26px;max-width:340px;font-size:15px;text-align:left}
+.items li{display:flex;gap:8px;align-items:baseline;padding:3px 0}
+.items i{flex:1;border-bottom:2px dotted var(--ink);opacity:.4}
+/* HAUL */
+.track{height:450svh;position:relative}
+.stage{position:sticky;top:0;height:100svh;overflow:hidden;background:#162c70}
+.rm .track{height:auto}.rm .stage{position:relative}
+#scene{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.lbl{position:absolute;top:8px;left:16px;z-index:3;font-size:12px;font-weight:800;letter-spacing:.2em;text-transform:uppercase}
+.hud{position:absolute;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(440px,calc(100% - 24px));background:var(--paper);border-radius:20px;padding:14px 16px;text-align:center;box-shadow:0 14px 30px -8px rgba(0,0,0,.45);z-index:3}
+.hud p{margin:0 0 10px;font-size:17px;min-height:26px}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.hud .btn{padding:.55em 1.1em}
+#scene:not(.ready) .obj{pointer-events:none}
+.halo{fill:#efe3c3;fill-opacity:.12;cursor:pointer}
+.ring{fill:none;stroke:var(--tom);stroke-width:3.5;stroke-dasharray:1;stroke-dashoffset:1;stroke-linecap:round;transition:stroke-dashoffset .5s}
+.obj:hover .ring,.obj:focus-visible .ring,.obj.sel .ring{stroke-dashoffset:0}
+.obj:hover .halo,.obj:focus-visible .halo{fill-opacity:.25}
+.bub{fill:none;stroke:#efe3c3;stroke-width:1.5;opacity:.5;animation:rise 9s linear infinite}
+@keyframes rise{to{transform:translateY(-520px);opacity:0}}
+.koi{animation:drift 45s linear infinite;opacity:.6}
+@keyframes drift{from{transform:translateX(-220px)}to{transform:translateX(640px)}}
+/* NOTE */
+.note{position:fixed;z-index:70;left:0;right:0;bottom:0;max-height:70svh;overflow:auto;background:var(--paper);padding:30px 22px calc(22px + env(safe-area-inset-bottom,0px));border-radius:22px 22px 0 0;box-shadow:0 -14px 40px rgba(0,0,0,.35);animation:up .35s ease-out;outline:none}
+.note[hidden]{display:none}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+.note .nd{width:96px;height:96px;float:left;margin:0 14px 4px 0}
+.note h3{margin:0 0 6px;font-size:26px;font-family:"Segoe Script","Snell Roundhand","Bradley Hand",cursive;line-height:1.1}
+.note p{margin:0 0 10px}
+.note .x{position:absolute;top:8px;right:10px;width:44px;height:44px;border:2px solid var(--ink);border-radius:50%;background:none;font-size:22px;cursor:pointer;color:var(--ink)}
+.note .pin{position:absolute;top:10px;left:50%;width:14px;height:14px;border-radius:50%;background:var(--tom);border:2px solid var(--ink)}
+.sw{clear:both;display:flex;flex-wrap:wrap;gap:8px;padding-top:12px;border-top:2px dashed rgba(18,38,63,.3)}
+.sw button{font:inherit;font-size:14px;font-weight:700;min-height:44px;padding:.3em .9em;border:2px solid var(--ink);border-radius:999px;background:none;color:var(--ink);cursor:pointer}
+.sw button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+@media(min-width:820px){.note{left:auto;right:28px;bottom:auto;top:50%;width:340px;border-radius:6px;transform:translateY(-50%) rotate(1.6deg);animation:none;padding-top:34px}}
+.aware{background:#d9f0e6;padding:84px 18px 90px;text-align:center}
+.aw-in{max-width:560px;margin:0 auto}
+.aware h2{font-size:clamp(32px,9vw,52px);margin:6px 0 18px}
+.aw-lead{margin:0 auto;max-width:440px}
+.big{font-size:clamp(88px,27vw,150px);color:var(--tom);line-height:1;margin:8px 0 0}
+.big small{display:block;font:800 clamp(12px,3.4vw,15px)/1.2 "Avenir Next","Segoe UI",system-ui,sans-serif;letter-spacing:.25em;text-transform:uppercase;color:var(--ink);margin:4px 0 14px}
+.aw-list{margin:36px 0 20px;text-align:left}
+.aw-list article{display:flex;gap:16px;align-items:center;padding:18px 0;border-top:2px dotted rgba(35,26,31,.35)}
+.aw-list svg{flex:none;width:80px;height:80px}
+.aw-list h3{margin:0 0 2px;font-size:21px}
+.aw-list p{margin:0;font-size:16px}
+.aware .small{margin:8px 0 26px}
+/* ORDER */
+.order{min-height:100svh;padding:70px 16px 90px;display:grid;place-items:center;position:relative;overflow:hidden}
+.slip{position:relative;width:100%;max-width:560px;background:var(--paper);border-radius:6px 6px 20px 20px;padding:30px 22px 28px;box-shadow:0 2px 4px rgba(18,38,63,.08),0 24px 48px -14px rgba(18,38,63,.3);border-top:0}
+.slip h2{font-size:clamp(30px,8.5vw,46px);margin:4px 0 10px}
+.pv{display:block;width:min(100%,300px);margin:14px auto 6px;overflow:visible;background:#d9f0e6;border-radius:22px;border:0}
+.pv-o{transition:transform .7s cubic-bezier(.3,1.3,.5,1),opacity .5s;transform-box:fill-box;transform-origin:center}
+.pv-o.out{transform:translateY(-110px) rotate(-10deg);opacity:0}
+.acts{list-style:none;padding:0;margin:12px 0}
+.act{display:flex;align-items:center;gap:14px;width:100%;min-height:68px;padding:10px 4px;font:inherit;text-align:left;background:none;border:0;border-bottom:2px dashed rgba(18,38,63,.3);color:var(--ink);cursor:pointer}
+.act span:nth-child(2){flex:1}
+.chk{flex:none;width:30px;height:30px;border:2.5px solid var(--ink);border-radius:6px;display:grid;place-items:center;color:#fff;font-weight:900;transition:background .2s}
+.on .chk{background:var(--tom)}.on .chk::after{content:"✓"}
+.ico{flex:none;width:48px;height:48px;opacity:0;transform:scale(.3) rotate(-25deg);transition:all .5s cubic-bezier(.3,1.5,.5,1)}
+.on .ico{opacity:1;transform:none}
+.done{color:var(--tom);font-size:clamp(26px,7vw,38px);margin:16px 0}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+<filter id="rough"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="0.8"/></filter>
+<filter id="soft" x="-5%" y="-20%" width="110%" height="170%"><feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#000" flood-opacity=".3"/></filter>
+<pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><line x1="0" y1="0" x2="0" y2="5" stroke="#12263f" stroke-width=".8" opacity=".55"/></pattern>
+<pattern id="mesh" width="28" height="28" patternUnits="userSpaceOnUse"><rect width="28" height="28" fill="#12263f" fill-opacity=".28"/><path d="M0 14 14 0 28 14 14 28Z" fill="none" stroke="#efe3c3" stroke-width="1.6"/></pattern>
+<pattern id="meshInk" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M0 14 14 0 28 14 14 28Z" fill="none" stroke="#12263f" stroke-width="1.6"/></pattern>
+<g id="bowl"><path d="M40 0Q40 260 200 275Q360 260 360 0Z" stroke-width="3" stroke-linejoin="round"/><ellipse cx="200" cy="0" rx="160" ry="12" fill="none" stroke-width="6"/><path d="M40 0 200-70 360 0" fill="none" stroke-width="2.5"/></g>
+<symbol id="fish" viewBox="0 0 100 100"><path d="M72 50 97 30Q92 50 97 70Z" style="fill:var(--c,#3a5fc4)"/><path d="M80 50 94 41M80 50 95 50M80 50 94 59" stroke="#fff" stroke-opacity=".55" stroke-width="1.6" stroke-linecap="round" fill="none"/><path d="M38 35Q47 21 60 37Z" style="fill:var(--e,#e8222e)"/><path d="M6 52Q10 33 40 33Q64 33 76 46L76 52Z" style="fill:var(--a,#25b3a5)"/><path d="M6 52H76L74 55Q62 70 38 69Q10 68 6 52Z" style="fill:var(--b,#f9c0d2)"/><path d="M22 41H64" stroke="#1d6b3a" stroke-width="2.2" stroke-linecap="round" stroke-dasharray=".1 4.2" fill="none"/><path d="M26 58c4 0 4 6 0 6M36 57c4 0 4 7 0 7M46 57c4 0 4 7 0 7M56 56c4 0 4 7 0 7" fill="none" stroke-width="1.9" stroke-linecap="round" style="stroke:var(--d,#e8629a)"/><path d="M29 38Q35 49 29 58" fill="none" stroke-width="2.2" stroke-linecap="round" style="stroke:var(--c,#3a5fc4)"/><path d="M30 57Q42 54 46 63Q36 65 30 57Z" style="fill:var(--e,#e8222e)"/><circle cx="20" cy="46" r="6.5" fill="#fffdf3"/><circle cx="20.6" cy="46.4" r="4.4" fill="#1a1216"/><circle cx="22" cy="44.8" r="1.4" fill="#fff"/><path d="M8 55q4 3 9 1" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="1.5" stroke-linecap="round"/></symbol><symbol id="wrapper" viewBox="0 0 100 100"><path d="M16 24 38 14 52 26 78 12 86 36 78 50 90 66 64 62 52 84 40 64 12 72 22 48Z" fill="#e4ebee"/><path d="M40 20 52 26 78 12 82 24 58 36Z" fill="#c9d6db"/><path d="M26 44 82 40 80 52 22 58Z" fill="#e8222e"/><path d="M30 32 46 46M62 30 56 54M32 64 48 56M72 58 60 56" stroke="#9fb2b9" stroke-width="2" stroke-linecap="round" fill="none"/><circle cx="52" cy="48" r="4" fill="#f7e66a"/></symbol><symbol id="tie" viewBox="0 0 100 100"><circle cx="46" cy="56" r="26" fill="none" stroke="#25b3a5" stroke-width="10"/><path d="M72 30 94 10" stroke="#25b3a5" stroke-width="8" stroke-linecap="round"/><rect x="57" y="26" width="22" height="17" rx="3" fill="#f58a1f" transform="rotate(35 68 34)"/><path d="M80 24 84 28M85 19 89 23" stroke="#fffdf3" stroke-width="2" stroke-linecap="round"/></symbol><symbol id="line" viewBox="0 0 100 100"><path d="M12 72C26 8 58 96 78 28S34 16 26 54 86 84 88 48C90 20 36 30 44 82" fill="none" stroke="#6f8ff0" stroke-width="4" stroke-linecap="round"/><path d="M44 82q4 12 14 6 4-6-2-8" fill="none" stroke="#f7e66a" stroke-width="3.2" stroke-linecap="round"/><circle cx="12" cy="72" r="5" fill="#f58a1f"/></symbol><symbol id="pad" viewBox="0 0 100 100"><path d="M50 50 90 38A42 42 0 1 1 78 18Z" fill="#a9cfa0" stroke="#12263f" stroke-width="2.4" stroke-linejoin="round"/><path d="M50 50 20 30M50 50 14 60M50 50 40 90M50 50 74 84" stroke="#12263f" stroke-width="1.4" opacity=".5"/></symbol>
+<symbol id="oldfish" viewBox="0 0 100 100"><path d="M10 52Q30 20 66 38L92 22Q85 50 92 78L66 62Q30 82 10 52Z" fill="#8fd0c6" stroke="#12263f" stroke-width="2.6" stroke-linejoin="round"/><path d="M22 58Q40 74 62 62L66 62Q30 82 10 52Z" fill="url(#hatch)"/><path d="M30 38Q40 52 31 66M44 34Q54 51 44 70M58 38Q66 51 58 62" fill="none" stroke="#12263f" stroke-width="3.6" stroke-linecap="round"/><path d="M44 31Q52 14 64 37" fill="#e0533d" stroke="#12263f" stroke-width="2.2" stroke-linejoin="round"/><circle cx="21" cy="49" r="2.6" fill="#12263f"/></symbol>
+<symbol id="oldwrapper" viewBox="0 0 100 100"><path d="M16 24 38 14 52 26 78 12 86 36 78 50 90 66 64 62 52 84 40 64 12 72 22 48Z" fill="#dfe6e8" stroke="#12263f" stroke-width="2.6" stroke-linejoin="round"/><path d="M16 24 38 14 52 26 40 40Z" fill="url(#hatch)"/><path d="M30 32 46 46M62 28 56 52M32 62 50 52M70 58 58 54" stroke="#12263f" stroke-width="1.6" fill="none"/><path d="M44 40 66 38 64 50 42 52Z" fill="#e0533d" stroke="#12263f" stroke-width="1.8"/></symbol>
+<symbol id="oldtie" viewBox="0 0 100 100"><circle cx="46" cy="56" r="26" fill="none" stroke="#12263f" stroke-width="12"/><circle cx="46" cy="56" r="26" fill="none" stroke="#bfe6e0" stroke-width="6.5"/><rect x="57" y="27" width="20" height="16" rx="3" fill="#bfe6e0" stroke="#12263f" stroke-width="2.6" transform="rotate(35 67 35)"/><path d="M72 30 93 11" stroke="#12263f" stroke-width="11" stroke-linecap="round"/><path d="M72 30 93 11" stroke="#bfe6e0" stroke-width="5.5" stroke-linecap="round"/></symbol>
+<symbol id="oldline" viewBox="0 0 100 100"><path d="M12 72C26 8 58 96 78 28S34 16 26 54 86 84 88 48C90 20 36 30 44 82" fill="none" stroke="#12263f" stroke-width="5" stroke-linecap="round"/><path d="M12 72C26 8 58 96 78 28S34 16 26 54 86 84 88 48C90 20 36 30 44 82" fill="none" stroke="#cfe9ef" stroke-width="2" stroke-linecap="round"/><path d="M44 82q4 12 14 6 4-6-2-8" fill="none" stroke="#12263f" stroke-width="3" stroke-linecap="round"/><circle cx="12" cy="72" r="4" fill="#e0533d" stroke="#12263f" stroke-width="2"/></symbol>
+</defs>
+</svg>
+
+<!-- 1. THE MENU -->
+<header class="menu" id="top">
+  
+  
+  <div class="sheet">
+    
+    
+    <h1 class="display">Add to <span>Catch</span></h1><p class="tag" style="margin-top:8px">Coastal café · seafood &amp; sides</p>
+    <svg class="shoal" viewBox="0 0 400 360" aria-hidden="true"><g class="f"><use href="#fish" x="60" y="-70" width="240" height="240"/></g><g class="f" style="animation-delay:-1.2s"><g transform="translate(400 0) scale(-1 1)"><use href="#fish" x="40" y="-5" width="240" height="240" style="--a:#9ab0f0;--b:#d5eefa;--c:#ef6fa6;--d:#2f4fb0;--e:#e8222e"/></g></g><g class="f" style="animation-delay:-2.4s"><use href="#fish" x="10" y="85" width="170" height="170" style="--a:#b6e07a;--b:#7fd5c8;--c:#2e7d32;--d:#25b3a5;--e:#ef6fa6"/></g><g class="f" style="animation-delay:-3s"><g transform="translate(400 0) scale(-1 1)"><use href="#fish" x="20" y="90" width="140" height="140" style="--a:#f7e66a;--b:#fbc7d6;--c:#f58a1f;--d:#ef6fa6;--e:#f58a1f"/></g></g><g class="f" style="animation-delay:-.6s"><use href="#fish" x="90" y="115" width="250" height="250" style="--a:#ef6fa6;--b:#f9c0d2;--c:#e8222e;--d:#e8222e;--e:#e8222e"/></g><g class="f" style="animation-delay:-1.8s"><use href="#fish" x="40" y="195" width="230" height="230" style="--a:#2e7d32;--b:#a8d8a4;--c:#f7e66a;--d:#2e7d32;--e:#25b3a5"/></g></svg>
+    <p class="cap hand">What comes up with today’s catch?</p>
+    <ul class="items"><li>Catch of the day<i></i>ask the net</li><li>Sides<i></i>see below</li></ul>
+    <button class="btn" id="start">Start the haul ↓</button><p class="tag" style="margin:36px 0 0;font-size:10px">Illustrated field notebook · no. 01</p>
+  </div>
+</header>
+
+<!-- 2. HAUL -->
+<section class="track" id="track" aria-label="Haul the net">
+  <div class="stage" id="stage">
+    <span class="lbl">The haul</span>
+    <svg id="scene" viewBox="0 0 400 640" preserveAspectRatio="xMidYMid meet" role="group" aria-label="An illustrated net being hauled up from the sea">
+      <g id="waves" fill="#fff"><path opacity=".05" d="M-600 200Q-300 160 0 200T600 200 1200 200V1100H-600Z"/><path opacity=".05" d="M-600 380Q-300 340 0 380T600 380 1200 380V1100H-600Z"/><path opacity=".05" d="M-600 540Q-300 500 0 540T600 540 1200 540V1100H-600Z"/></g>
+      <g class="koi"><use href="#fish" x="0" y="480" width="70" height="70" style="--a:#f58a1f;--b:#f7e66a;--c:#e8222e;--d:#e8222e;--e:#e8222e"/></g>
+      <g class="koi" style="animation-delay:-22s"><use href="#fish" x="0" y="290" width="50" height="50" style="--a:#ef6fa6;--b:#f9c0d2;--c:#3a5fc4;--d:#e8222e;--e:#3a5fc4"/></g>
+      <circle class="bub" cx="70" cy="620" r="5"/><circle class="bub" cx="330" cy="660" r="7" style="animation-delay:-3s"/><circle class="bub" cx="110" cy="700" r="4" style="animation-delay:-6s"/><circle class="bub" cx="290" cy="580" r="4" style="animation-delay:-1s"/>
+      <path id="ropeO" fill="none" stroke="#12263f" stroke-width="9" stroke-linejoin="round"/>
+      <path id="ropeI" fill="none" stroke="#e6d4a4" stroke-width="5.5" stroke-linejoin="round" stroke-dasharray="7 3"/>
+      <g id="net">
+        <use href="#bowl" fill="url(#mesh)" stroke="#efe3c3"/>
+        <g class="obj" id="o-fish" data-k="fish" role="button" tabindex="-1" aria-label="Fish. Inspect">
+          <g class="em"><ellipse class="halo" cx="200" cy="105" rx="82" ry="48"/><use href="#fish" x="125" y="30" width="150" height="150" filter="url(#rough)" pointer-events="none"/></g>
+          <ellipse class="ring" pathLength="1" cx="200" cy="105" rx="88" ry="54"/></g>
+        <g class="obj" id="o-wrapper" data-k="wrapper" role="button" tabindex="-1" aria-label="Wrapper fragment. Inspect">
+          <g class="em"><ellipse class="halo" cx="125" cy="185" rx="38" ry="38"/><use href="#wrapper" x="80" y="140" width="90" height="90" filter="url(#rough)" pointer-events="none"/></g>
+          <ellipse class="ring" pathLength="1" cx="125" cy="185" rx="43" ry="43"/></g>
+        <g class="obj" id="o-tie" data-k="tie" role="button" tabindex="-1" aria-label="Plastic packaging tie. Inspect">
+          <g class="em"><ellipse class="halo" cx="275" cy="185" rx="38" ry="38"/><use href="#tie" x="230" y="140" width="90" height="90" filter="url(#rough)" pointer-events="none"/></g>
+          <ellipse class="ring" pathLength="1" cx="275" cy="185" rx="43" ry="43"/></g>
+        <g class="obj" id="o-line" data-k="line" role="button" tabindex="-1" aria-label="Discarded fishing line. Inspect">
+          <g class="em"><ellipse class="halo" cx="200" cy="228" rx="46" ry="34"/><use href="#line" x="150" y="178" width="100" height="100" filter="url(#rough)" pointer-events="none"/></g>
+          <ellipse class="ring" pathLength="1" cx="200" cy="228" rx="52" ry="40"/></g>
+      </g>
+      <path d="M-600-300H1000V34C900 52 800 18 700 34S500 52 400 34 200 18 100 34-100 52-200 34-400 20-600 34Z" fill="#faf8ec" filter="url(#soft)"/>
+      
+    </svg>
+    <div class="hud">
+      <p class="hand" id="prompt" aria-live="polite"></p>
+      <div class="row">
+        <button class="btn alt" id="down">Lower ↓</button>
+        <button class="btn" id="up">Haul net ↑</button>
+        <button class="btn alt" id="next" hidden>Why was it there? ↓</button>
+      </div>
+    </div>
+  </div>
+  <aside class="note" id="note" role="dialog" aria-labelledby="nt" aria-describedby="nb" tabindex="-1" hidden>
+    <span class="pin" aria-hidden="true"></span>
+    <button class="x" id="nx" aria-label="Close note">×</button>
+    <svg class="nd" viewBox="0 0 100 100" aria-hidden="true"><use id="nu" href="#fish" width="100" height="100" filter="url(#rough)"/></svg>
+    <h3 id="nt"></h3>
+    <p id="nb"></p>
+    <p class="small hand">An illustrated catch showing possible pathways, not a record of a real haul.</p>
+    <div class="sw" id="sw" role="group" aria-label="Switch object">
+      <button data-k="fish">Fish</button><button data-k="wrapper">Wrapper</button><button data-k="tie">Tie</button><button data-k="line">Line</button>
+    </div>
+  </aside>
+</section>
+
+<!-- 3b. AWARENESS -->
+<section class="aware" id="aware" aria-labelledby="aw-h">
+  <div class="aw-in">
+    <p class="tag">After the haul</p>
+    <h2 class="display" id="aw-h">That net didn’t only catch fish.</h2>
+    <p class="aw-lead">Our catch is an illustration, but the problem behind it is real. Estimates suggest around</p>
+    <p class="big display">11<small>million tonnes</small></p>
+    <p class="aw-lead">of plastic enter the ocean every year, mostly from land. Without change, that could rise to as much as 37 million tonnes a year by 2040.</p>
+    <div class="aw-list">
+      <article><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#wrapper" width="100" height="100"/></svg><div><h3 class="display">From street to sea</h3><p>An estimated 2.7 million tonnes of that plastic travels down rivers. Litter dropped on a street could reach the sea through drains and waterways.</p></div></article>
+      <article><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#tie" width="100" height="100"/></svg><div><h3 class="display">Mostly plastic</h3><p>Plastic is estimated to make up at least 85% of marine litter. Light packaging can be carried off by wind or runoff, then it lasts for years.</p></div></article>
+      <article><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#line" width="100" height="100"/></svg><div><h3 class="display">Lost gear</h3><p>Abandoned or lost fishing gear is thought to be about 10% of marine litter, up to a million tonnes a year. Loose line can entangle turtles, seabirds and mammals.</p></div></article>
+    </div>
+    <p class="small">Global estimates from UNEP and WWF; figures vary by study. They describe the wider problem, not this illustrated net.</p>
+    <button class="btn" id="toOrder">What could change? ↓</button>
+  </div>
+</section>
+
+<!-- 4. CHANGE THE CATCH -->
+<section class="order" id="order">
+  <div class="slip">
+    <p class="tag hand">order slip · table 1</p>
+    <h2 class="display">What would you take off the menu?</h2>
+    <p class="small">An illustration of how prevention could work. Nothing here means a real cleanup has happened.</p>
+    <svg class="pv" viewBox="0 -90 400 380" aria-hidden="true">
+      <use href="#bowl" fill="url(#meshInk)" stroke="#12263f"/>
+      <use href="#fish" x="125" y="30" width="150" height="150" filter="url(#rough)"/>
+      <g class="pv-o" id="pv-wrapper"><use href="#wrapper" x="80" y="140" width="90" height="90" filter="url(#rough)"/></g>
+      <g class="pv-o" id="pv-tie"><use href="#tie" x="230" y="140" width="90" height="90" filter="url(#rough)"/></g>
+      <g class="pv-o" id="pv-line"><use href="#line" x="150" y="178" width="100" height="100" filter="url(#rough)"/></g>
+    </svg>
+    <ul class="acts">
+      <li><button class="act" data-k="wrapper" aria-pressed="false"><span class="chk" aria-hidden="true"></span><span>Put loose wrappers in a covered collection bin.</span><svg class="ico" viewBox="0 0 100 100" aria-hidden="true"><use href="#wrapper" width="100" height="100"/></svg></button></li>
+      <li><button class="act" data-k="tie" aria-pressed="false"><span class="chk" aria-hidden="true"></span><span>Keep packaging scraps contained during handling.</span><svg class="ico" viewBox="0 0 100 100" aria-hidden="true"><use href="#tie" width="100" height="100"/></svg></button></li>
+      <li><button class="act" data-k="line" aria-pressed="false"><span class="chk" aria-hidden="true"></span><span>Use a designated collection point for worn fishing line.</span><svg class="ico" viewBox="0 0 100 100" aria-hidden="true"><use href="#line" width="100" height="100"/></svg></button></li>
+    </ul>
+    <div aria-live="polite"><p class="display done" id="done" hidden>Keep the catch. Keep waste out.</p></div>
+    <button class="btn" id="replay">Replay the haul</button>
+  </div>
+</section>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+const track=$('#track'),scene=$('#scene'),note=$('#note');
+const rmq=matchMedia('(prefers-reduced-motion: reduce)');
+let rm=rmq.matches,p=0,step=0,cur=null,last=null,ready=null;
+const D={
+ fish:{name:'Fish',text:'The expected catch. The other objects came up in the same net.'},
+ wrapper:{name:'Wrapper fragment',text:'Loose litter can wash from streets into storm drains and connected waterways.'},
+ tie:{name:'Plastic packaging tie',text:'Light pieces of packaging can escape from bins or handling areas and be carried by wind or runoff.'},
+ line:{name:'Discarded fishing line',text:'Fishing gear can be lost at sea. Loose line can entangle wildlife.'}};
+const C0=[22,44,112],C1=[104,200,192];
+const trackTop=()=>track.getBoundingClientRect().top+scrollY;
+const scrollP=()=>{const r=track.getBoundingClientRect(),g=track.offsetHeight-innerHeight;return g>0?clamp(-r.top/g):0};
+
+function render(){
+ const ny=430-280*p;
+ $('#net').setAttribute('transform',`translate(0 ${ny}) rotate(${(Math.sin(p*18)*2.6*(1-p*.7)).toFixed(2)} 200 -70)`);
+ let d='M200 -30',y=-30;const end=ny-70;
+ for(let i=0;y<end;i++){const n=Math.min(y+14,end);d+=`Q${200+(i%2?6:-6)} ${(y+n)/2} 200 ${n}`;y=n}
+ $('#ropeO').setAttribute('d',d);$('#ropeI').setAttribute('d',d);
+ $('#waves').setAttribute('transform',`translate(0 ${(p*70).toFixed(1)})`);
+ $('#stage').style.background=`rgb(${C0.map((c,i)=>Math.round(c+(C1[i]-c)*p)).join(',')})`;
+ const e=clamp((p-.35)/.5),o=clamp((p-.12)/.4);
+ $$('.em').forEach(g=>{g.setAttribute('transform',`translate(0 ${((1-e)*60).toFixed(1)})`);g.style.opacity=o});
+ const r=p>=.97;
+ if(r!==ready){ready=r;scene.classList.toggle('ready',r);$$('.obj').forEach(g=>g.tabIndex=r?0:-1);$('#next').hidden=!r}
+ $('#prompt').textContent=p<.05?'Scroll to haul the net up.':r?'Tap what came up.':'Keep hauling…';
+ $('#up').setAttribute('aria-disabled',p>=.99);$('#down').setAttribute('aria-disabled',p<=.01);
+ check();
+}
+function check(){if(!note.hidden&&(p<.9||track.getBoundingClientRect().bottom<innerHeight*.5))closeNote(false)}
+function sync(){if(!rm)p=scrollP();render()}
+let tick=0;addEventListener('scroll',()=>{if(!tick)tick=requestAnimationFrame(()=>{tick=0;sync()})},{passive:true});
+addEventListener('resize',sync);
+function setRM(){document.body.classList.toggle('rm',rm);step=Math.round(p*4);if(rm)p=step/4;else p=scrollP();render()}
+rmq.addEventListener('change',e=>{rm=e.matches;setRM()});
+
+function go(dir){
+ if(rm){step=clamp(step+dir,0,4);p=step/4;render();return}
+ const t=clamp((Math.round(p*4)+dir)/4),g=track.offsetHeight-innerHeight;
+ scrollTo({top:trackTop()+t*g,behavior:'smooth'});
+}
+$('#up').onclick=()=>go(1);$('#down').onclick=()=>go(-1);
+$('#start').onclick=()=>{scrollTo({top:trackTop(),behavior:rm?'auto':'smooth'});if(rm){step=0;p=0;render()}};
+$('#next').onclick=()=>$('#aware').scrollIntoView({behavior:rm?'auto':'smooth'});
+$('#toOrder').onclick=()=>$('#order').scrollIntoView({behavior:rm?'auto':'smooth'});
+
+/* inspect */
+function openNote(k){
+ const was=note.hidden;cur=k;last=$('#o-'+k);
+ $('#nu').setAttribute('href','#'+k);$('#nt').textContent=D[k].name;$('#nb').textContent=D[k].text;
+ note.hidden=false;
+ $$('.obj').forEach(o=>o.classList.toggle('sel',o.dataset.k===k));
+ $$('#sw button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===k));
+ if(was)note.focus({preventScroll:true});
+}
+function closeNote(refocus=true){
+ if(note.hidden)return;note.hidden=true;$$('.obj').forEach(o=>o.classList.remove('sel'));
+ if(refocus&&last)last.focus({preventScroll:true});
+}
+$$('.obj').forEach(o=>{
+ o.addEventListener('click',()=>{if(ready)openNote(o.dataset.k)});
+ o.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(ready)openNote(o.dataset.k)}});
+});
+$$('#sw button').forEach(b=>b.onclick=()=>openNote(b.dataset.k));
+$('#nx').onclick=()=>closeNote();
+addEventListener('keydown',e=>{if(e.key==='Escape')closeNote()});
+
+/* order slip */
+const on=new Set();
+function renderOrder(){
+ $$('.act').forEach(b=>{const k=b.dataset.k,s=on.has(k);b.setAttribute('aria-pressed',s);b.classList.toggle('on',s);$('#pv-'+k).classList.toggle('out',s)});
+ $('#done').hidden=on.size<3;
+}
+$$('.act').forEach(b=>b.onclick=()=>{const k=b.dataset.k;on.has(k)?on.delete(k):on.add(k);renderOrder()});
+$('#replay').onclick=()=>{
+ on.clear();renderOrder();closeNote(false);step=0;p=0;render();
+ scrollTo({top:0,behavior:rm?'auto':'smooth'});
+ setTimeout(()=>$('#start').focus({preventScroll:true}),rm?0:700);
+};
+setRM();renderOrder();
+</script>
+</body>
+</html>
